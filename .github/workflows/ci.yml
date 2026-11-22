@@ -1,0 +1,72 @@
+name: MERN CI Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # ==========================================
+  # Job 1: Backend Lint & Automated Tests
+  # ==========================================
+  backend-ci:
+    name: Backend CI (Lint & Unit/Integration Tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Run ESLint for backend code quality
+        run: npm run lint
+
+      - name: Run Backend Integration & Unit Tests
+        run: npm test
+        env:
+          NODE_ENV: test
+
+  # ==========================================
+  # Job 2: Frontend Lint & Production Build
+  # ==========================================
+  frontend-ci:
+    name: Frontend CI (Lint & Production Build Check)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run ESLint for frontend code quality
+        run: npm run lint
+
+      - name: Validate Vite Production Bundle Compilation
+        run: npm run build
+        env:
+          VITE_API_URL: http://localhost:5000/api
